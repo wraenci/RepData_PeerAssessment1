@@ -1,0 +1,64 @@
+Peer Assessment 1
+=================
+
+This markdown file includes all necessary information to re-run my analyses on the [Activity monitoring data](https://github.com/wraenci/RepData_PeerAssessment1/blob/master/activity.zip) [52K] available from the forked GitHub repo.  
+
+##About the data
+
+The actual data comes from a personal activity monitoring device that collects data at 5 minutes intervals throughout the day. It consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+The variables included in this dataset are:  
+- **steps**: Number of steps taken in a five minute interval (missing values are decoded as ```NA```)  
+- **date**: The date on which the measurement was taken in YYYY-MM-DD format  
+- **interval**: Identifier for the 5-minute interval in which the measurement was taken  
+
+The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.
+
+##Loading and preprocessing the data
+
+I changed "https" to "http" to overcome problems in opening the connection.
+
+```{r}
+temp <- tempfile()
+download.file("http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", temp, mode="wb")
+data <- read.csv(unz(temp, "activity.csv"))
+unlink(temp)
+```
+
+Convert the date and inverval columns to class "Date"
+
+```{r}
+data$date <- as.Date(data$date, format="%Y-%m-%d")
+```
+
+##1. What is mean total number of steps taken per day?
+
+Calculate the total number of steps taken per day
+
+Install the "plyr" and "ggplot2" packages (if you haven't done so already)
+
+```{r}
+#install.packages(c("plyr", "ggplot2"))
+```
+
+Calculate the total number of steps taken each day, plot a histogram, and calculate and report also the mean and median of the data:
+
+```{r warning=FALSE, message=FALSE}
+library(plyr)
+library(ggplot2)
+steps.a.day <- ddply(data, "date", function(x) colSums(x[c("steps")], na.rm=TRUE))
+ggplot(steps.a.day, aes(x=steps)) + geom_histogram(colour="black", fill="white") + labs(title="Total number of steps per day")
+mean(steps.a.day$steps)
+median(steps.a.day$steps)
+```
+
+##2. What is the average daily activity pattern?
+
+Create a sequence corresponding to the 5 minutes time intervals, calculate the average number of steps taken, averaged across all days, and plot it as a time series.
+
+```{r}
+sequence <- seq(0, 1435, by=5)
+avg.steps.a.day <- ddply(data, "interval", function(x) colMeans(x[c("steps")], na.rm=TRUE))
+tidy <- avg.steps.a.day[avg.steps.a.day$steps > 0,]
+ggplot(tidy, aes(x=interval, y=steps)) + geom_line() + labs(title="Average number of steps per day")
+```
